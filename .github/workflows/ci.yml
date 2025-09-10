@@ -1,0 +1,26 @@
+name: CI pipe line
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ["1.24.x", "1.25.x"]
+
+    steps:
+      - name: Check out Code
+        uses: actions/checkout@v5
+
+      - name: Set up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-verrsion }}
+
+      - name: Install dependencies
+        run: go mod tidy && go get -u ./..
+
+      # - name: Testing go
