@@ -77,5 +77,19 @@ func (todos *Todos) print() {
 }
 
 func main() {
-	fmt.Println("hello to ilana")
+	todos := Todos{}
+	storage := NewStorage[Todos]("todos.json")
+	err := stroage.Load(&todos)
+	if err != nil {
+		fmt.println("Warning: Could not load todos from storage. Starting fresh todos.")
+	}
+
+	cmdFlags := NewCmdFlags()
+	cmdFlags.Execute(&todos)
+
+	err = stroage.Save(todos)
+	if err != nil {
+		fmt.Printf("Error saving todos in storage: %v\n", err)
+	}
+
 }
