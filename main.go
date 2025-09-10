@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Todo struct {
 	Title     string
@@ -26,4 +29,5 @@ func (t Todos) delete(index int) error {
 }
 
 func main() {
+	fmt.Println("hello to ilana")
 }
