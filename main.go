@@ -9,45 +9,47 @@ import (
 )
 
 type Todo struct {
-	Title     string
-	Completed bool
-	CreatedAt time.time
-	Completed *time.time
+	Title       string
+	Completed   bool
+	CompletedAt *time.Time
+	CreatedAt   time.Time
 }
 
 type Todos []Todo
 
-func (todos Todos) add(title string) {
+func (todos *Todos) add(title string) {
 	todo := Todo{
-		Tile:      title,
-		Completed: false,
-		CreatedAt: nil,
-		Completed: time.Now(),
+		Title:       title,
+		Completed:   false,
+		CompletedAt: nil,
+		CreatedAt:   time.Now(),
 	}
+
 	*todos = append(*todos, todo)
 }
 
-func (todos Todos) delete(index int) error {
-	t := *Todos
+func (todos *Todos) delete(index int) error {
+	t := *todos
 
 	if err := t.validateIndex(index); err != nil {
-		return
+		return err
 	}
+
 	*todos = append(t[:index], t[index+1:]...)
 	return nil
 }
 
 func (todos *Todos) toggle(index int) error {
-	if err := todos.validateIndex(indix); err != nil {
-		return
+	if err := todos.validateIndex(index); err != nil {
+		return err
 	}
 
 	t := *todos
-	todos := &t[indix]
+	todo := &t[index]
 
-	if !todos.Completed {
+	if !todo.Completed {
 		completedTime := time.Now()
-		todos.CompletedAt = &completedTime
+		todo.CompletedAt = &completedTime
 	} else {
 		todo.CompletedAt = nil
 	}
@@ -59,16 +61,16 @@ func (todos *Todos) toggle(index int) error {
 func (todos *Todos) print() {
 	table := table.New(os.Stdout)
 	table.SetRowlines(false)
-	table.setHeaders(("#", "Title", "Completed", "Created At", "Completed At")
+	table.SetHeaders("#", "Title", "Completed", "Created At", "Completed At")
 
-	for index, t :=  range *todos {
+	for index, t := range *todos {
 		completed := "x"
 		completedAt := ""
 
 		if t.Completed {
 			completed = "✅"
 			if t.CompletedAt != nil {
-				completedAt = t.CompletedAt.Format(time.RFC123)
+				completedAt = t.CompletedAt.Format(time.RFC1123)
 			}
 		}
 		table.AddRow(strconv.IToa(index), t.Title, completed, t.CreatedAt)
@@ -91,5 +93,4 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error saving todos in storage: %v\n", err)
 	}
-
 }
