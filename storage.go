@@ -1,3 +1,5 @@
+package main
+
 import (
 	"encoding/json"
 	"os"
@@ -26,5 +28,3 @@ func (s Storage[T]) Load(data *T) error {
 	}
 	return json.Unmarshal(fileData, data)
 }
-
-
