@@ -1,96 +1,46 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
-	"github.com/aquasecurity/table"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
 type Todo struct {
-	Title       string
-	Completed   bool
-	CompletedAt *time.Time
-	CreatedAt   time.Time
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Completed bool      `json:"completed"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-type Todos []Todo
-
-func (todos *Todos) add(title string) {
-	todo := Todo{
-		Title:       title,
-		Completed:   false,
-		CompletedAt: nil,
-		CreatedAt:   time.Now(),
-	}
-
-	*todos = append(*todos, todo)
+var todos = []Todo{
+	{ID: 1, Title: "go to school", Completed: true, CreatedAt: time.Now()},
+	{ID: 2, Title: "pick up food", Completed: true, CreatedAt: time.Now()},
 }
 
-func (todos *Todos) delete(index int) error {
-	t := *todos
-
-	if err := t.validateIndex(index); err != nil {
-		return err
-	}
-
-	*todos = append(t[:index], t[index+1:]...)
-	return nil
-}
-
-func (todos *Todos) toggle(index int) error {
-	if err := todos.validateIndex(index); err != nil {
-		return err
-	}
-
-	t := *todos
-	todo := &t[index]
-
-	if !todo.Completed {
-		completedTime := time.Now()
-		todo.CompletedAt = &completedTime
-	} else {
-		todo.CompletedAt = nil
-	}
-
-	todo.Completed = !todo.Completed
-	return nil
-}
-
-func (todos *Todos) print() {
-	table := table.New(os.Stdout)
-	table.SetRowlines(false)
-	table.SetHeaders("#", "Title", "Completed", "Created At", "Completed At")
-
-	for index, t := range *todos {
-		completed := "x"
-		completedAt := ""
-
-		if t.Completed {
-			completed = "✅"
-			if t.CompletedAt != nil {
-				completedAt = t.CompletedAt.Format(time.RFC1123)
-			}
-		}
-		table.AddRow(strconv.IToa(index), t.Title, completed, t.CreatedAt)
-	}
-	table.Render()
-}
+// func getTodo(t *chi.Todo)
 
 func main() {
-	todos := Todos{}
-	storage := NewStorage[Todos]("todos.json")
-	err := stroage.Load(&todos)
-	if err != nil {
-		fmt.println("Warning: Could not load todos from storage. Starting fresh todos.")
-	}
+	url := "libsql://[DATABASE_URL].turso.io?authToken=[TOKEN]"
 
-	cmdFlags := NewCmdFlags()
-	cmdFlags.Execute(&todos)
-
-	err = stroage.Save(todos)
+	db, err := sql.Open("libsql", url)
 	if err != nil {
-		fmt.Printf("Error saving todos in storage: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to open db %s: %s", url, err)
+		os.Exit(1)
 	}
+	defer db.Close()
+
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World!"))
+	})
+	http.ListenAndServe(":3000", r)
 }
