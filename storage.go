@@ -18,7 +18,7 @@ func (s *Storage[T]) Save(data T) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.Filename, fileData, 0o644)
+	return os.WriteFile(s.Filesname, fileData, 0o644)
 }
 
 func (s Storage[T]) Load(data *T) error {
