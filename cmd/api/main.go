@@ -86,4 +86,6 @@ func main() {
 
 	fmt.Println("Server running on http://localhost:3000")
 	http.ListenAndServe(":3000", r)
+
+	fmt.Println("hello")
 }
