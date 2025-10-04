@@ -1,100 +1,90 @@
 package main
 
-import (
-	"os"
-	"time"
+import "testing"
 
-	"github.com/aquasecurity/table"
-)
+func TestSomething(t *testing.T) {}
 
-type Todo struct {
-	Title       string
-	Completed   bool
-	CompletedAt *time.Time
-	CreatedAt   time.Time
-}
+//
+// import (
+// 	_ "github.com/tursodatabase/libsql-client-go/libsql"
+// )
 
-type Todos []Todo
-
-func (todos *Todos) add(title string) {
-	todo := Todo{
-		Title:       title,
-		Completed:   false,
-		CompletedAt: nil,
-		CreatedAt:   time.Now(),
-	}
-
-	*todos = append(*todos, todo)
-}
-
-func (todos *Todos) delete(index int) error {
-	if err := todos.validateIndex(index); err != nil {
-		return err
-	}
-
-	t := *todos
-
-	*todos = append(t[:index], t[index+1:]...)
-	return nil
-}
-
-func (todos *Todos) toggle(index int) error {
-	if err := todos.validateIndex(index); err != nil {
-		return err
-	}
-
-	t := *todos
-	todo := &t[index]
-
-	if !todo.Completed {
-		completedTime := time.Now()
-		todo.CompletedAt = &completedTime
-	} else {
-		todo.CompletedAt = nil
-	}
-
-	todo.Completed = !todo.Completed
-	return nil
-}
-
-func (todos *Todos) print() {
-	table := table.New(os.Stdout)
-	table.SetRowlines(false)
-	table.SetHeaders("#", "Title", "Completed", "Created At", "Completed At")
-
-	for index, t := range *todos {
-		completed := "x"
-		completedAt := ""
-
-		if t.Completed {
-			completed = "✅"
-			if t.CompletedAt != nil {
-				completedAt = t.CompletedAt.Format(time.RFC1123)
-			}
-		}
-		table.AddRow(
-			strconv.IToa(index),
-			t.Title,
-			completed,
-			t.CreatedAt.Format(time.RFC1123),
-		)
-	}
-	table.Render()
-}
+// type TodoList struct {
+// 	ID        int       `json:"id"`
+// 	Title     string    `json:"title"`
+// 	Completed bool      `json:"completed"`
+// 	CreatedAt time.Time `json:"created_at"`
+// }
+//
+// type TodoService struct {
+// 	db *sql.DB
+// }
+//
+// func (s *TodoService) QueryAllList(ctx context.Context) ([]TodoList, error) {
+// 	query := "SELECT id, title, completed, created_at FROM todolist"
+//
+// 	rows, err := s.db.QueryContext(ctx, query)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to query todos: %w", err)
+// 	}
+// 	defer rows.Close()
+//
+// 	var todos []TodoList
+// 	for rows.Next() {
+// 		var todo TodoList
+// 		err := rows.Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("failed to scan todo: %w", err)
+// 		}
+// 		todos = append(todos, todo)
+// 	}
+// 	if err = rows.Err(); err != nil {
+// 		return nil, fmt.Errorf("row iteration err: %w", err)
+// 	}
+// 	return todos, nil
+// }
 
 // func main() {
-// 	todos := Todos{}
-// 	storage := NewStorage[Todos]("todos.json")
-// 	err := storage.Load(&todos)
-// 	if err != nil {
-// 		fmt.Println("Warning: Could not load todos from storage. Starting fresh todos.")
+// 	dbName := os.Getenv("DATABASE_URL")
+// 	dbToken := os.Getenv("AUTH_TOKEN")
+//
+// 	if dbName == "" || dbToken == "" {
+// 		log.Printf("URL: %s", dbName)
+// 		if len(dbToken) > 8 {
+// 			log.Printf("Token: %s...", dbToken[:8])
+// 		} else {
+// 			log.Printf("Token: %s", dbToken)
+// 		}
+// 		log.Fatal("Database URL and authToken are required")
 // 	}
 //
-// 	cmdFlags := NewCmdFlags()
-// 	cmdFlags.Execute(&todos)
+// 	url := fmt.Sprintf("%s?authToken=%s", dbName, dbToken)
 //
-// 	err = storage.Save(todos)
+// 	log.Println("Connecting to database....")
+// 	db, err := sql.Open("libsql", url)
 // 	if err != nil {
-// 		fmt.Printf("Error saving todos in storage: %v\n", err)
+// 		log.Fatalf("Failed to open database: %v", err)
+// 	}
+// 	defer db.Close()
+//
+// 	service := &TodoService{db: db}
+//
+// 	r := chi.NewRouter()
+// 	r.Use(middleware.Logger)
+//
+// 	r.Get("/data", func(w http.ResponseWriter, r *http.Request) {
+// 		todos, err := service.QueryAllList(r.Context())
+// 		if err != nil {
+// 			http.Error(w, fmt.Sprintf("failed to query database: %s", err), http.StatusInternalServerError)
+// 			return
+// 		}
+// 		w.Header().Set("Content-Type", "application/json")
+// 		json.NewEncoder(w).Encode(todos)
+// 	})
+//
+// 	addr := ":3000"
+// 	fmt.Printf("Server running on http://localhost%s\n", addr)
+// 	if err := http.ListenAndServe(addr, r); err != nil {
+// 		log.Fatalf("Server error: %v", err)
 // 	}
 // }

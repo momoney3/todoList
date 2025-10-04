@@ -19,8 +19,8 @@ import (
 type TodoList struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`
-	COMPLETED bool      `json:"completed"`
-	CREATEDAT time.Time `json:"created_at"`
+	Completed bool      `json:"completed"`
+	CreatedAT time.Time `json:"created_at"`
 }
 
 type TodoService struct {
@@ -28,9 +28,9 @@ type TodoService struct {
 }
 
 func (s *TodoService) QueryAllList(ctx context.Context) ([]TodoList, error) {
-	queru := "SELECT * FROM todolist"
+	query := "SELECT * FROM todolist"
 
-	rows, err := s.db.QueryContext(ctx, queru)
+	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("falied to query todos: %w", err)
 	}
@@ -39,7 +39,7 @@ func (s *TodoService) QueryAllList(ctx context.Context) ([]TodoList, error) {
 	var todos []TodoList
 	for rows.Next() {
 		var todo TodoList
-		err := rows.Scan(&todo.ID, &todo.Title, &todo.COMPLETED, &todo.CREATEDAT)
+		err := rows.Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAT)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan todo: %w", err)
 		}
@@ -71,21 +71,24 @@ func main() {
 	}
 	defer db.Close()
 
+	service := &TodoService{db: db}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
 	r.Get("/data", func(w http.ResponseWriter, r *http.Request) {
-		databases, err := TodoList(db)
+		todos, err := service.QueryAllList(r.Context())
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to query database error code %s", err), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "applcatoin/json")
-		json.NewEncoder(w).Encode(databases)
+		w.Header().Set("Content-Type", "applicatoin/json")
+		json.NewEncoder(w).Encode(todos)
 	})
 
+	addr := ":3000"
 	fmt.Println("Server running on http://localhost:3000")
-	http.ListenAndServe(":3000", r)
-
-	fmt.Println("hello")
+	if err := http.ListenAndServe(addr, r); err != nil {
+		log.Fatalf("Server error: %v", err)
+	}
 }

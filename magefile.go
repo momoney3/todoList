@@ -9,16 +9,27 @@ import (
 )
 
 func Run() error {
-	fmt.Print("It is now runing ")
-	return sh.Run("go", "run", "cmd/main.go")
+	fmt.Println("It is now runing ")
+	return sh.Run("go", "run", "cmd/api/main.go")
+}
+
+func Tidy() error {
+	fmt.Print("Tidy up ")
+
+	if err := sh.Run("go", "mod", "tidy"); err != nil {
+		return err
+	}
+
+	fmt.Println("and Cleaned")
+	return sh.Run("go", "clean")
 }
 
 func Test() error {
-	fmt.Print("Testing project")
+	fmt.Println("Testing project")
 	return sh.Run("go", "test", "./...")
 }
 
 func Build() error {
-	fmt.Print("Building project")
+	fmt.Println("Building project")
 	return sh.Run("go", "build", "-o", "todo", "-v", "-a", "cmd/api/")
 }
