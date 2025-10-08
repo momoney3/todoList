@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -14,37 +16,39 @@ import (
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
-type Database struct {
+type TodoList struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`
 	COMPLETED bool      `json:"completed"`
 	CREATEDAT time.Time `json:"created_at"`
 }
 
-func queryUsers(db *sql.DB) ([]Database, error) {
-	// rows, err := db.Query("SELECT id, title FROM todolist")
-	rows, err := db.Query("SELECT * FROM todolist")
+type TodoService struct {
+	db *sql.DB
+}
+
+func (s *TodoService) QueryAllList(ctx context.Context) ([]TodoList, error) {
+	queru := "SELECT * FROM todolist"
+
+	rows, err := s.db.QueryContext(ctx, queru)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to execute query: %v\n", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("falied to query todos: %w", err)
 	}
 	defer rows.Close()
 
-	var databases []Database
-
+	var todos []TodoList
 	for rows.Next() {
-		var database Database
-		if err := rows.Scan(&database.ID, &database.Title, &database.COMPLETED, &database.CREATEDAT); err != nil {
-			return nil, err
+		var todo TodoList
+		err := rows.Scan(&todo.ID, &todo.Title, &todo.COMPLETED, &todo.CREATEDAT)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan todo: %w", err)
 		}
-		fmt.Println("Row:", database)
-		databases = append(databases, database)
+		todos = append(todos, todo)
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration err: %w", err)
 	}
-	return databases, nil
+	return todos, nil
 }
 
 func main() {
@@ -52,24 +56,26 @@ func main() {
 	dbToken := os.Getenv("AUTH_TOKEN")
 
 	if dbName == "" || dbToken == "" {
-		fmt.Printf("db: %s and token: %s\n", dbName, dbToken)
-		panic("Database or Token are missing")
+		log.Printf("URL: %s", dbName)
+		log.Printf("Token: %s", dbToken[:8])
+		log.Fatal("Database URL and authToken are needed")
+		// panic("Database or Token are missing")
 	}
 
 	url := fmt.Sprintf("%s?authToken=%s", dbName, dbToken)
 
+	log.Println("Connecting to database....")
 	db, err := sql.Open("libsql", url)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to open db %s: %s", url, err)
-		os.Exit(1)
+		log.Fatalf("Failed to open database %v", err)
 	}
 	defer db.Close()
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		databases, err := queryUsers(db)
+	r.Get("/data", func(w http.ResponseWriter, r *http.Request) {
+		databases, err := TodoList(db)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to query database error code %s", err), http.StatusInternalServerError)
 			return
