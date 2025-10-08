@@ -35,8 +35,6 @@ func Build(tregger string) error {
 		return sh.Run("podman", "build", "-t", "todolist-App", ".")
 
 	case "run":
-
-	case "run":
 		fmt.Println("Building Go project inside a Podman container")
 		return sh.Run(
 			"podman", "run", "--rm",
@@ -50,11 +48,7 @@ func Build(tregger string) error {
 		fmt.Println("Building go project locally")
 		return sh.Run("go", "build", "-o", "todo", "-v", "-a", "./cmd/api")
 
-	case "print":
-		fmt.Println("it is working")
-		return sh.Run("echo", "it working")
-
 	default:
-		return fmt.Errorf("unknown fetcher: %s (expected: build, run, list)", tregger)
+		return fmt.Errorf("Unknown fetcher: %s (expected: build, run, list)", tregger)
 	}
 }
