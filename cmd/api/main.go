@@ -91,4 +91,5 @@ func main() {
 	if err := http.ListenAndServe(addr, r); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
+	fmt.Println("test if it working")
 }
